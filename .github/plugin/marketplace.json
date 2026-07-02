@@ -1,0 +1,31 @@
+{
+  "name": "appcircle",
+  "owner": {
+    "name": "Appcircle",
+    "email": "info@appcircle.io"
+  },
+  "metadata": {
+    "description": "Appcircle's official plugin marketplace."
+  },
+  "plugins": [
+    {
+      "name": "appcircle",
+      "source": "./appcircle",
+      "description": "Appcircle skills covering mobile CI/CD, build, code signing, distribution, publishing, and testing, with MCP connectivity to the Appcircle platform.",
+      "version": "1.0.0",
+      "category": "Developer Tools",
+      "keywords": [
+        "appcircle",
+        "mobile",
+        "ci-cd",
+        "build",
+        "code-signing",
+        "distribution",
+        "publishing",
+        "app-store",
+        "testing",
+        "mcp"
+      ]
+    }
+  ]
+}
