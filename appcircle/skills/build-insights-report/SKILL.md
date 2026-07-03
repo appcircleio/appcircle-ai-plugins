@@ -136,23 +136,66 @@ per-section reference files are the human-readable spec that `render.py`
 implements (and the fallback for the widget path below) — they are not a license
 to re-type the HTML each time.
 
+`render.py` renders numbers only — it does not write prose. The handful of
+"AI Summary" / "AI Insight" / "Recommendation" boxes are narrative text that
+**you** (the model running this skill) author from that section's actual
+returned numbers, and inject into the envelope before it goes to disk. If a box's
+text field is left out, `render.py` skips that box entirely rather than
+fabricating one — so an in-scope section with no authored text just renders with
+a gap where the narrative would be.
+
 ### Primary path (any environment with code execution — Claude Code, Cowork, analysis tool)
 
-1. Write the **full** `get_build_insights_report` envelope (the entire
-   `{success, data, meta}` object) to a JSON file, e.g. `response.json`.
-2. Run `python render.py response.json report.html` from the skill directory.
+1. Get the `get_build_insights_report` envelope (the full `{success, data, meta}`
+   object).
+2. **Author the AI text.** For each section actually in scope, write the narrative
+   called for by that section's reference file, using only numbers present in the
+   response, and set it at the exact key listed below (a plain string, or object
+   for queue time). Skip a key entirely if its section/subsection is absent — do
+   not invent a value to fill it.
+
+   **This step only adds keys — it never replaces or rebuilds anything.** Start
+   from the exact JSON the tool returned and set one additional field inside each
+   section object you're authoring for (e.g.
+   `data.sections.health_snapshot.ai_summary = "..."`). Every field that was
+   already in that section — `summary`, `top_active_profiles`,
+   `top_build_activity`, all the counts and rates, all the arrays — must still be
+   there afterward, untouched. Do **not** write out a new section object that
+   contains only the `ai_*` key: that silently deletes every metric the tool
+   returned, and `render.py` will render zeros/blanks for all of it with no error
+   (each numeric field there is read with a `0`-default, precisely so a genuinely
+   empty period still renders instead of crashing — that default is not a signal
+   that something is wrong, missing real data with it is). If you're
+   authoring by editing a JSON file rather than a JSON value in memory, re-read
+   the file after your edit and confirm the original fields are still present
+   before moving on.
+
+   | Section | Key | Spec |
+   |---|---|---|
+   | Health Snapshot | `data.sections.health_snapshot.ai_summary` | `references/health-snapshot-trends.md` § AI Summary |
+   | Maturity — Reliability | `data.sections.maturity_assessment.reliability.ai_insight` | `references/maturity-assessment.md` § Reliability card |
+   | Maturity — Discipline | `data.sections.maturity_assessment.discipline.ai_insight` | `references/maturity-assessment.md` § Discipline card (only if `discipline` is present) |
+   | Maturity — Speed | `data.sections.maturity_assessment.speed.ai_insight` | `references/maturity-assessment.md` § Speed card |
+   | Maturity — Security | `data.sections.maturity_assessment.security.ai_insight` | `references/maturity-assessment.md` § Security card (only if `security` is present) |
+   | Queue Time | `data.sections.queue_time.ai_recommendation` = `{"headline": "...", "body": "..."}` | `references/queue-time.md` § Recommendation card (only worth authoring when that section's trigger condition is met — see the reference file) |
+
+3. Write the **augmented envelope** (original `{success, data, meta}` plus the
+   text you just added) to a JSON file, e.g. `response.json`.
+4. Run `python render.py response.json report.html` from the skill directory.
    The script selects sections from `data.sections`, honors
    `meta.omitted_sections`, renders in canonical order (maturity, health + trends,
    root cause, workflow quality, artifact health, queue time), embeds Chart.js
    from cdnjs for the chart sections, and appends the omission note when needed.
-3. Present `report.html` (an existing `reports/`/`output/` folder if present, else
+5. Present `report.html` (an existing `reports/`/`output/` folder if present, else
    the current directory). One `present_files` call, no postamble.
 
 The renderer takes the response exactly as the tool returns it — including the
 full daily series and the complete inactive-profile list — and does the trimming
 at render time (inactive list capped at 12 with a "+N more" line, all-null
-duration series replaced with a note instead of an empty chart). No pre-processing
-of the payload is required or wanted.
+duration series replaced with a note instead of an empty chart). The only
+addition to the payload is the authored `ai_*` text from step 2 above; nothing
+else about the numbers is pre-processed or re-derived before it reaches the
+renderer.
 
 ### Widget fallback (chat surface, only when the person wants it inline)
 
@@ -241,10 +284,14 @@ Apply across every section:
 4. **No colored row backgrounds** — left accent bars only.
 5. **Durations and sizes are already converted** in the response (minutes for build
    and queue time, MB for artifacts). Render them as given; do not re-divide.
-6. **AI narrative is authored at render time** from the returned numbers — the tool
-   returns data, not prose. Where a section calls for an "AI Summary" or "AI
-   Insight", write it from that section's values. Keep it plain and direct, no
-   jargon, no internal field names.
+6. **AI narrative is authored by you before rendering, not computed by `render.py`**
+   — the tool returns data, not prose, and the script only displays what it's
+   given. Where a section calls for an "AI Summary", "AI Insight", or the Queue
+   Time "Recommendation", write it from that section's actual values (see the
+   key table in the Rendering section above) instead of relying on any
+   templated wording. Keep it plain and direct, no jargon, no internal field
+   names. If you skip authoring one, its box just doesn't render — that's
+   correct behavior, not a bug.
 7. Do not automatically offer to export after rendering. Wait for the next
    instruction.
 

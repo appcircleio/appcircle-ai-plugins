@@ -64,36 +64,44 @@ chart, styled to match Appcircle's in-product upgrade nudge: a light orange card
 (`.rec`) with an uppercase "RECOMMENDATION" label, a bold navy headline, body
 copy explaining the situation, and one or two pill-outline buttons.
 
-`render.py` builds this from `_queue_recommendation(qt)`:
+The headline and body are authored by you before calling `render.py`. Only the
+gate (whether the card appears at all) and the buttons are computed by
+`render.py` itself from `_queue_recommendation_gate(qt)` — those are deterministic
+display rules, not narrative, so they stay in the script:
 
-- **Trigger.** Shows when `p95_wait_minutes >= 3`, or when the trend is climbing
-  and P95 is at least 1.5 minutes. Otherwise queue health is fine and no card
-  renders — this is not a permanent fixture of the section.
-- **Trend.** Computed from `daily_trend`: compares the first and last point.
-  >25% increase → "climbing" (most urgent headline, "...your current capacity
-  may not keep up"); >25% decrease → "improving"; otherwise "stable". Fewer than
-  two points → "insufficient" (no trend claim made, headline stays neutral).
-- **Plan-aware copy.** Appcircle's machine plans, lowest to highest, are
-  Standard → Velocity → Ultra (`PLAN_ORDER` / `NEXT_PLAN` in `render.py`). The tool
-  attributes queue wait to each tier via `queue_time.plan_breakdown`, e.g.
-  `{"standard_wait_minutes": 6.0, "velocity_wait_minutes": 0.0,
-  "ultra_wait_minutes": 0.0}`. `_plan_from_breakdown()` picks the tier that
-  absorbed the most wait this period (the one an upgrade would help most) and
-  flags whether more than one tier saw real activity. The card then names that
-  tier and the next one up ("Upgrade to {next plan}"); if more than one tier was
-  active it reads "Most of your queue wait..." rather than implying it's the
-  org's only tier. Already on Ultra → only the "Increase concurrency" button
-  shows, since there's no higher tier to suggest. A flat `queue_time.plan`
-  string, if the tool ever adds one directly, is checked first and used as-is —
-  the breakdown is the fallback, not the other way around. With neither field,
-  the card still renders with plan-agnostic copy ("upgrading your machine
-  plan") and a generic "View plans" button.
-- **Breakdown caption.** Whenever `plan_breakdown` is present, a small caption
-  under the build-count line shows the raw split, e.g. "By plan: Standard 6m ·
-  Velocity 0m · Ultra 0m" — so the inference behind the recommendation is
-  visible, not just asserted.
-- **Buttons.** "Increase concurrency" links to `https://appcircle.io/contact`.
-  The second button (upgrade / "View plans") also links to `https://appcircle.io/contact`.
+- **Trigger.** The gate shows when `p95_wait_minutes >= 3`, or when the trend is
+  climbing and P95 is at least 1.5 minutes. Otherwise queue health is fine and no
+  card renders — this is not a permanent fixture of the section. Compute this
+  same condition yourself before deciding whether to author `ai_recommendation`;
+  if the gate would be true but you leave the key out, the card silently does not
+  render (no fallback wording is generated).
+- **What to author.** When the trigger condition is met, set
+  `queue_time.ai_recommendation` to `{"headline": "...", "body": "..."}` in the
+  envelope. Ground both in the actual numbers:
+  - **Trend.** Derive from `daily_trend`: compare the first and last point. A
+    >25% increase is "climbing" (most urgent framing — capacity may not be
+    keeping up); >25% decrease is "improving" (elevated but easing); otherwise
+    "stable". Fewer than two points means no trend claim can be made.
+  - **Plan-aware framing.** Appcircle's machine plans, lowest to highest, are
+    Standard → Velocity → Ultra. The tool attributes queue wait to each tier via
+    `queue_time.plan_breakdown`, e.g. `{"standard_wait_minutes": 6.0,
+    "velocity_wait_minutes": 0.0, "ultra_wait_minutes": 0.0}` (a flat
+    `queue_time.plan` string, if present, names the tier directly and takes
+    precedence over the breakdown). Name whichever tier absorbed the most wait
+    this period — that's the one an upgrade would help most — and, if more than
+    one tier saw real activity, say "most of your queue wait" rather than
+    implying it's the org's only tier. Reference the P95 wait value and the next
+    plan tier up in the body text. With no plan information at all, write
+    plan-agnostic copy about concurrency and machine plan upgrades generally.
+- **Breakdown caption.** Whenever `plan_breakdown` is present, `render.py`
+  already shows a small caption under the build-count line with the raw split,
+  e.g. "By plan: Standard 6m · Velocity 0m · Ultra 0m" — so the inference behind
+  your recommendation is visible, not just asserted. You don't need to restate
+  this in the authored body.
+- **Buttons.** Fixed, not authored: `render.py` always shows "Increase
+  concurrency" (links to `https://appcircle.io/contact`), plus "Upgrade to
+  {next plan}" or "View plans" (same URL) unless the dominant tier is already
+  Ultra, in which case only the first button shows.
 
 If the tool's `plan_breakdown` keys or shape change, update `_BREAKDOWN_KEYS` and
 `_plan_from_breakdown()` in `render.py` (and this table) to match.

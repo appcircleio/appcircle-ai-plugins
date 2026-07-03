@@ -2,37 +2,33 @@
 
 Appcircle's official plugin for AI coding assistants. It connects your coding agent to the [Appcircle](https://appcircle.io) mobile CI/CD platform, covering build, code signing, distribution, publishing (App Store / Google Play / Huawei AppGallery), and testing, so you can ask Appcircle questions and look up your own organization's data right from chat.
 
-## Install in Claude Code
+## Supported Platforms
 
-This repo is itself a Claude Code plugin marketplace.
+- **Claude Code** — this repo is itself a Claude Code plugin marketplace.
 
-```shell
-/plugin marketplace add appcircleio/appcircle-ai-plugins
-/plugin install appcircle@appcircle
-/reload-plugins
-```
+  ```shell
+  /plugin marketplace add appcircleio/appcircle-ai-plugins
+  /plugin install appcircle@appcircle
+  /reload-plugins
+  ```
 
-## Using it in claude.ai
+- **claude.ai** — you can install this plugin's skills in claude.ai too:
 
-You can install this plugin's skills in claude.ai too:
+  1. Open **Customize**.
+  2. Click **Add plugin**.
+  3. Choose **Create plugin**, then **Add marketplace**.
+  4. Enter the repository URL: `https://github.com/appcircleio/appcircle-ai-plugins`.
 
-1. Open **Customize**.
-2. Click **Add plugin**.
-3. Choose **Create plugin**, then **Add marketplace**.
-4. Enter the repository URL: `https://github.com/appcircleio/appcircle-ai-plugins`.
+  MCP tools are only available in Claude Code and Copilot CLI for now; installing the plugin in claude.ai gets you the skills, not the MCP tools.
 
-MCP tools are only available in Claude Code and Copilot CLI for now; installing the plugin in claude.ai gets you the skills, not the MCP tools.
+- **GitHub Copilot CLI** — this repo is also a Copilot CLI plugin marketplace.
 
-## Install in GitHub Copilot CLI
+  ```shell
+  copilot plugin marketplace add appcircleio/appcircle-ai-plugins
+  copilot plugin install appcircle@appcircle
+  ```
 
-This repo is also a Copilot CLI plugin marketplace.
-
-```shell
-copilot plugin marketplace add appcircleio/appcircle-ai-plugins
-copilot plugin install appcircle@appcircle
-```
-
-This plugin can also be added to **VS Code's Copilot Chat** via its Agent Plugins feature.
+  This plugin can also be added to **VS Code's Copilot Chat** via its Agent Plugins feature.
 
 ## Skills
 
