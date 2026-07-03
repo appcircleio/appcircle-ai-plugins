@@ -398,23 +398,11 @@ def r_health(hs, rng):
         out.append('<div class="mut2" style="padding:5px 0;font-size:13px;">(none this period)</div>')
     out.append('</div></div>')
 
-    summary = _health_ai(cur, hs)
-    out.append(f'<div class="ai" style="border-left:4px solid var(--orange);"><div class="ai-l">&#9679; AI summary</div><div class="ai-t">{esc(summary)}</div></div>')
+    summary = hs.get("ai_summary")
+    if summary:
+        out.append(f'<div class="ai" style="border-left:4px solid var(--orange);"><div class="ai-l">&#9679; AI summary</div><div class="ai-t">{esc(summary)}</div></div>')
     out.append('</div>')
     return "".join(out), []
-
-def _health_ai(cur, hs):
-    total = cur.get("total", 0)
-    sr = round(cur.get("success_rate", 0))
-    top = hs.get("top_active_profiles", [])
-    lead = top[0]["profile"] if top else "the busiest profile"
-    canceled = cur.get("canceled", 0)
-    parts = [f"This period ran {total} build{'s' if total != 1 else ''} at a {sr}% success rate."]
-    if canceled and total and canceled / total >= 0.3:
-        parts.append(f"Cancellations are a notable share ({canceled} of {total}), so the success rate reflects abandoned runs as much as real failures.")
-    if top:
-        parts.append(f"{lead} drove the most activity and is the first profile to check if volume grows.")
-    return " ".join(parts)
 
 def r_trends(hs, rng):
     tr = hs.get("trends", {})
@@ -610,9 +598,9 @@ def r_maturity(ma, rng, omitted_sub=None):
     for i, (name, val, fs) in enumerate(rel_rows):
         bc = "bd-b" if i < len(rel_rows) - 1 else ""
         out.append(f'<div class="frow {bc}"><span style="display:flex;align-items:center;gap:8px;font-size:13px;"><span class="dot" style="background:{score_color(fs)};"></span>{name}</span><span style="font-weight:500;font-size:13px;">{val}</span></div>')
-    lowest = min(rel_rows, key=lambda r: r[2]) if rel_rows else None
-    if lowest:
-        out.append(f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(_rel_insight(lowest, f))}</div></div>')
+    rel_insight = rel.get("ai_insight")
+    if rel_insight:
+        out.append(f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(rel_insight)}</div></div>')
     out.append('</div>')
 
     if disc is not None:
@@ -623,29 +611,35 @@ def r_maturity(ma, rng, omitted_sub=None):
                    f'<div class="track3" style="margin-bottom:16px;"><span class="fill" style="width:{wfc}%;background:var(--navy);"></span></div>')
         out.append(f'<div class="frow" style="padding:0 0 5px;font-size:13px;"><span class="muted">Best practices</span><span style="font-weight:500;">{bps} / 100</span></div>'
                    f'<div class="track3"><span class="fill" style="width:{bps}%;background:var(--orange);"></span></div>')
-        out.append(f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(_disc_insight(wfc, bps))}</div></div>')
+        disc_insight = disc.get("ai_insight")
+        if disc_insight:
+            out.append(f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(disc_insight)}</div></div>')
         out.append('</div>')
     out.append('</div>')
 
     # Speed + Security
     out.append('<div class="row" style="margin-bottom:12px;">')
     cp = {"consistent": "pg", "moderate": "pw", "high variance": "pb"}
+    speed_insight = sp.get("ai_insight")
+    speed_ai_html = f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(speed_insight)}</div></div>' if speed_insight else ""
     out.append(f'<div class="col card"><div class="ctitle" style="margin-bottom:12px;">Speed</div><div style="display:flex;gap:16px;">'
                f'<div style="flex:1;"><div class="lbl">&#9679; P95 / P50 ratio</div><div class="val28">{sp.get("weighted_avg_ratio",0):.1f}</div>'
                f'<span class="pill {cp.get(sp.get("consistency"),"pn")}">{esc(sp.get("consistency",""))}</span>'
                f'<div class="mut2" style="font-size:11px;margin-top:8px;">workspace avg across active profiles</div></div>'
                f'<div style="flex:1;"><div class="lbl">&#9679; Speed score</div><div class="val28">{sp.get("score",0)}</div></div></div>'
-               f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(_speed_insight(sp))}</div></div></div>')
+               f'{speed_ai_html}</div>')
 
     if sec is not None:
         pe = "".join(f'<span class="pp">{esc(p)}</span>' for p in sec.get("profiles_without_env_vars", []))
         sh = sec.get("signing_health_score", 0)
         shp = "pg" if sh >= 80 else ("pw" if sh >= 50 else "pb")
+        security_insight = sec.get("ai_insight")
+        security_ai_html = f'<div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(security_insight)}</div></div>' if security_insight else ""
         out.append(f'<div class="col card"><div class="ctitle" style="margin-bottom:12px;">Security</div><div style="display:flex;gap:16px;">'
                    f'<div style="flex:1;"><div class="lbl">&#9679; Signing health</div><div class="val28">{sh}</div><span class="pill {shp}">{"healthy" if sh>=80 else "attention"}</span></div>'
                    f'<div style="flex:1;"><div class="lbl">&#9679; Env var usage</div><div class="val28">{sec.get("env_var_usage_score",0)}</div>'
                    + (f'<div class="mut2" style="font-size:11px;margin-bottom:6px;">Profiles with no environment variable group</div><div>{pe}</div>' if pe else '<div class="mut2" style="font-size:11px;">All profiles configured.</div>')
-                   + f'</div></div><div class="ai"><div class="ai-l">&#9679; AI insight</div><div class="ai-t">{esc(_security_insight(sec))}</div></div></div>')
+                   + f'</div></div>{security_ai_html}</div>')
     out.append('</div>')
 
     imps = ma.get("top_improvements", [])
@@ -663,17 +657,6 @@ def r_maturity(ma, rng, omitted_sub=None):
         out.append('<div class="mut2" style="font-size:13px;">No improvement actions for this period.</div>')
     out.append('</div></div>')
     return "".join(out), []
-
-def _rel_insight(lowest, f):
-    name = lowest[0]
-    if name == "Build success rate":
-        v = round(f.get("success_rate", {}).get("value", 0) * 100)
-        return f"Build success rate is the main reliability drag at {v}%. The lever is getting more builds to pass on the first run."
-    if name == "Mean time to recovery":
-        return f"Recovery time is the weakest factor, averaging {fmt_hours(f.get('mttr',{}).get('value_hours'))} from a failed build to the next success."
-    if name == "Flaky profiles":
-        return f"Flaky builds are the biggest reliability drag, with {f.get('flaky',{}).get('count',0)} profile(s) producing inconsistent results on the same commit."
-    return f"Warning hotspots are the weakest factor, with {f.get('warning_hotspots',{}).get('count',0)} profile(s) frequently passing with warnings."
 
 # --------------------------------------------------------------------------
 # Queue time recommendation card
@@ -719,100 +702,30 @@ def _plan_from_breakdown(breakdown):
     dominant = max(active, key=lambda tv: tv[1])[0] if active else pairs[0][0]
     return dominant, len(active) > 1, pairs
 
-def _queue_recommendation(qt):
-    """Builds the upgrade-nudge card when queue wait is long or trending up.
-    Prefers a flat `qt['plan']` string if present (not part of the confirmed
-    schema, kept for forward compatibility); otherwise infers the relevant
-    tier from `qt['plan_breakdown']`, the per-tier wait-minute attribution the
-    tool actually returns. With neither, falls back to plan-agnostic copy."""
+def _queue_recommendation_gate(qt):
+    """Decides whether the upgrade-nudge card should render at all, and which
+    buttons/plan tier it names. This is a deterministic display rule read
+    straight from the numbers (not narrative), so it stays in render.py. The
+    headline and body text are authored by the calling agent from these same
+    numbers and read from `qt['ai_recommendation']` — see queue-time.md. If the
+    gate says show but that text is missing, the card is silently skipped
+    rather than falling back to templated prose."""
     p95 = qt.get("p95_wait_minutes") or 0
     trend = _queue_trend(qt.get("daily_trend"))
     plan = qt.get("plan")
-    multi_tier = False
     if not plan:
-        plan, multi_tier, _ = _plan_from_breakdown(qt.get("plan_breakdown"))
+        plan, _, _ = _plan_from_breakdown(qt.get("plan_breakdown"))
 
     show = (p95 >= 3) or (trend == "climbing" and p95 >= 1.5)
     if not show:
         return None
-
-    p95_txt = fmt_mins(p95)
-    if trend == "climbing":
-        headline = "Queue times are growing — your current capacity may not keep up"
-        trend_txt = ", with the trend climbing throughout the period"
-    elif trend == "improving":
-        headline = "Queue wait is elevated, though easing — keep an eye on capacity"
-        trend_txt = ", though the trend has been easing"
-    else:
-        headline = "Queue wait is elevated — consider more capacity"
-        trend_txt = ""
-
-    if plan:
-        nxt = NEXT_PLAN.get(plan)
-        scope = "Most of your queue wait this period was on the" if multi_tier else "Your organization's queue wait this period was on the"
-        body = (f"{scope} <strong>{esc(plan)} plan</strong>, and P95 queue wait has reached "
-                f"<strong>{p95_txt}</strong>{trend_txt}. This suggests your current concurrency limit is being "
-                f"reached during peak hours. Consider increasing your concurrency limit"
-                + (f" or upgrading to the <strong>{esc(nxt)} plan</strong>" if nxt else "")
-                + " to reduce wait times across all builds.")
-    else:
-        body = (f"P95 queue wait has reached <strong>{p95_txt}</strong>{trend_txt}. This may indicate your "
-                "concurrency limit is being reached during peak hours. Consider increasing your concurrency "
-                "limit or upgrading your machine plan to reduce wait times across all builds.")
 
     buttons = [("Increase concurrency", DOC_CONCURRENCY)]
     if not plan or plan != "Ultra":
         label = f"Upgrade to {NEXT_PLAN[plan]}" if plan and plan in NEXT_PLAN else "View plans"
         buttons.append((label, DOC_PRICING))
 
-    return {"headline": headline, "body": body, "buttons": buttons}
-
-def _band(score, kind):
-    if kind == "completeness":
-        if score < 50: return "miss many of the recommended steps"
-        if score < 75: return "cover the essentials but skip several recommended steps such as caching, tests, or notifications"
-        if score < 90: return "are fairly complete, with only a few advanced steps left out"
-        return "are close to the ideal Appcircle flow"
-    if score < 50: return "several best-practice checks are failing"
-    if score < 75: return "a few best-practice checks still fail, most often scripts kept in workflow config rather than Git"
-    if score < 90: return "most best-practice checks pass"
-    return "best-practice checks are almost all passing"
-
-def _disc_insight(wfc, bps):
-    return (f"Workflows {_band(wfc, 'completeness')} (completeness {wfc}/100). "
-            f"On best practices ({bps}/100), {_band(bps, 'bp')}. "
-            "The detailed per-workflow breakdown is in the Workflow Quality section.")
-
-def _speed_insight(sp):
-    ratio = sp.get("weighted_avg_ratio", 0)
-    cons = sp.get("consistency", "")
-    if ratio <= 1.2:
-        tail = f"Builds are evenly paced (P95 is {ratio:.1f}x the median), so there are very few slow outliers."
-    elif ratio <= 2:
-        tail = f"P95 builds run about {ratio:.1f}x the median, so a minority of slower runs stretch the tail."
-    else:
-        tail = f"P95 builds run {ratio:.1f}x the median, so a few slow outliers are dragging the tail well above typical."
-    return f"{tail} The {cons} rating reflects how tightly build times cluster across active profiles."
-
-def _security_insight(sec):
-    sh = sec.get("signing_health_score", 0)
-    ev = sec.get("env_var_usage_score", 0)
-    n = len(sec.get("profiles_without_env_vars", []))
-    exp = sec.get("expiring_soon", [])
-    parts = []
-    if sh >= 80:
-        parts.append("Signing identities are healthy")
-    else:
-        parts.append(f"Signing health is the concern at {sh}/100")
-    if exp:
-        parts.append(f"and {len(exp)} identity(ies) are expiring soon")
-    if ev >= 80:
-        parts.append(". Environment variable coverage is also solid")
-    elif n:
-        parts.append(f". The main drag is environment variables: {n} profile(s) have no env var group, holding usage at {ev}/100")
-    else:
-        parts.append(f". Environment variable usage scores {ev}/100")
-    return "".join(parts).replace(" .", ".") + "."
+    return {"buttons": buttons}
 
 def r_workflow(wq, rng):
     out = [f'<div class="sec"><div class="hdr">Workflow quality · {esc(rng)}</div>']
@@ -963,12 +876,13 @@ def r_queue(qt, rng):
         scripts.append(_chart_js("cQ", "line", {"labels": labels, "datasets": [
             {"label": "Avg wait", "data": data, "borderColor": "#1A3352", "backgroundColor": "#1A3352", "borderWidth": 2, "pointRadius": 3, "tension": 0.3, "spanGaps": True}]}, y_label_suffix="m"))
 
-    rec = _queue_recommendation(qt)
-    if rec:
-        btns = "".join(f'<a href="{esc(u)}" target="_blank" rel="noopener" class="qbtn">{esc(l)}</a>' for l, u in rec["buttons"])
+    gate = _queue_recommendation_gate(qt)
+    ai_rec = qt.get("ai_recommendation") or {}
+    if gate and ai_rec.get("headline") and ai_rec.get("body"):
+        btns = "".join(f'<a href="{esc(u)}" target="_blank" rel="noopener" class="qbtn">{esc(l)}</a>' for l, u in gate["buttons"])
         out.append(f'<div class="rec"><div class="rec-l">&#9679; Recommendation</div>'
-                   f'<div class="rec-h">{esc(rec["headline"])}</div>'
-                   f'<div class="rec-b">{rec["body"]}</div>'
+                   f'<div class="rec-h">{esc(ai_rec["headline"])}</div>'
+                   f'<div class="rec-b">{esc(ai_rec["body"])}</div>'
                    f'<div>{btns}</div></div>')
 
     out.append('</div></div>')
@@ -987,6 +901,31 @@ ORDER = [
     ("queue_time", r_queue),
 ]
 
+# One marker field per section that the tool always includes alongside any
+# ai_* text. If a present section is missing its marker, the metric data was
+# almost certainly dropped when the ai_* fields were added (seen in practice:
+# an agent rebuilt the section object from scratch containing only the
+# authored text). render.py's numeric reads default to 0 for genuinely absent
+# fields, which would otherwise render silently as a page of zeros.
+_REQUIRED_MARKERS = {
+    "health_snapshot": "summary",
+    "maturity_assessment": "overall_score",
+    "root_cause": "top_failing_steps",
+    "workflow_quality": "per_profile",
+    "artifact_health": "artifact_size_per_profile",
+    "queue_time": "p95_wait_minutes",
+}
+
+def _warn_if_metrics_missing(sections):
+    for key, marker in _REQUIRED_MARKERS.items():
+        sec = sections.get(key)
+        if isinstance(sec, dict) and marker not in sec:
+            print(f"warning: data.sections.{key} has no '{marker}' field — its metric data "
+                  f"looks like it was dropped when ai_* text was added (only AI-authored text "
+                  f"survived). The rendered card will show 0s/blanks instead of real numbers. "
+                  f"Re-check that response.json still has every field the tool returned.",
+                  file=sys.stderr)
+
 def build_report(envelope):
     if not envelope.get("success", True):
         err = envelope.get("error", {})
@@ -995,6 +934,7 @@ def build_report(envelope):
     meta = envelope.get("meta", {})
     rng = fmt_range(data.get("date_range", {}))
     sections = data.get("sections", {})
+    _warn_if_metrics_missing(sections)
 
     body, scripts = [], []
     for key, fn in ORDER:
