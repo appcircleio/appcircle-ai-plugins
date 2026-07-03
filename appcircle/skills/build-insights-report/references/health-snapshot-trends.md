@@ -117,9 +117,16 @@ show a single muted line "(none this period)" rather than an empty card.
 ### AI Summary
 
 Full-width card, left border `4px solid #FF8F34`, background `#FFF8F3`. Label
-`● AI SUMMARY` in orange uppercase 11px. Text below in 13px `#374151`. Cover:
-overall volume and success-rate signal (healthy or not), the single most notable
-finding (dominant failing profile, recovery, spike), and one concrete observation.
+`● AI SUMMARY` in orange uppercase 11px. Text below in 13px `#374151`.
+
+This text is authored by you before calling `render.py`, from the actual values
+in this response — set it at `health_snapshot.ai_summary` (plain string) in the
+envelope before writing it to disk. `render.py` only displays whatever string is
+there; if the key is absent it renders the rest of the section with no AI Summary
+box (no placeholder, no fallback wording). Cover: overall volume and
+success-rate signal (healthy or not), the single most notable finding (dominant
+failing profile, recovery, spike), and one concrete observation grounded in a
+number from this response.
 
 ---
 

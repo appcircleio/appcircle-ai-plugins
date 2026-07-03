@@ -81,9 +81,11 @@ factor scores:
 - Warning hotspots → `{warning_hotspots.count} profiles affected`
 
 AI Insight box (background `#FFF8F3`, border `#FFD4A3`, radius 6px, padding 12px;
-label `● AI INSIGHT` 11px uppercase `#FF8F34`; body 12px `#374151`): name the
-lowest-scoring factor (lowest `factor_score`) and what it means in 1–2 plain
-sentences, no internal field names.
+label `● AI INSIGHT` 11px uppercase `#FF8F34`; body 12px `#374151`): authored by
+you before calling `render.py`, set at `reliability.ai_insight` (plain string) in
+the envelope. Name the lowest-scoring factor (lowest `factor_score`) and what it
+means in 1–2 plain sentences, no internal field names. `render.py` only displays
+this string — if omitted, the card renders with no AI Insight box.
 
 ### Discipline card
 
@@ -97,12 +99,23 @@ The detailed per-workflow completeness grid and the per-check best-practice
 breakdown live in Section 3 (Workflow Quality) and are not duplicated here. If
 Section 3 is also in scope, add a muted 11px line: "Full workflow breakdown below."
 
+AI Insight box (same style as Reliability's): authored by you, set at
+`discipline.ai_insight`. Cover both sub-scores in 1–2 plain sentences — how
+complete the workflows are and whether best-practice checks are mostly passing
+or mostly failing, using the two numbers above (no internal check identifiers).
+Omit the key entirely if `discipline` itself is absent this period.
+
 ### Speed card
 
 Two columns. Left: `● P95/P50 RATIO` label, `weighted_avg_ratio` (28px bold),
 consistency pill, caption "workspace avg across active profiles". Right: `● SPEED
 SCORE` label, `speed.score` (big), small caption. Consistency pill: `consistent` →
 pill good, `moderate` → pill warn, `high variance` → pill bad.
+
+AI Insight box: authored by you, set at `speed.ai_insight`. Say what the P95/P50
+ratio implies in plain terms (evenly paced vs. a slow tail dragging the average)
+and connect it to the consistency rating — 1–2 sentences, grounded in the actual
+ratio value.
 
 ### Security card
 
@@ -115,6 +128,11 @@ profile pills under a muted caption "Profiles with no environment variable group
 If `profiles_without_env_vars` is empty, show muted "All profiles configured." Omit
 the whole Security card only if the `security` key is absent or listed in
 `meta.omitted_subsections`.
+
+AI Insight box: authored by you, set at `security.ai_insight`. Name whichever of
+signing health or env var coverage is the weaker of the two, call out expiring
+identities if any exist, in 1–2 plain sentences. Omit the key if `security`
+itself is absent this period.
 
 ### Top Improvements
 
