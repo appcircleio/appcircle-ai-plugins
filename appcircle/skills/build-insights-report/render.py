@@ -920,10 +920,12 @@ def _warn_if_metrics_missing(sections):
     for key, marker in _REQUIRED_MARKERS.items():
         sec = sections.get(key)
         if isinstance(sec, dict) and marker not in sec:
-            print(f"warning: data.sections.{key} has no '{marker}' field — its metric data "
-                  f"looks like it was dropped when ai_* text was added (only AI-authored text "
-                  f"survived). The rendered card will show 0s/blanks instead of real numbers. "
-                  f"Re-check that response.json still has every field the tool returned.",
+            print(f"warning: data.sections.{key} is present but has no '{marker}' field. "
+                  f"That field is only ever missing here if the section's real content was "
+                  f"replaced with something incomplete (most commonly: only ai_* text was "
+                  f"kept when it was added, and the tool's actual metrics were dropped). "
+                  f"The rendered card will show 0s/blanks instead of real numbers — re-check "
+                  f"that response.json still has every field the tool returned for this section.",
                   file=sys.stderr)
 
 def build_report(envelope):
