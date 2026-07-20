@@ -34,13 +34,13 @@ Appcircle's official plugin for AI coding assistants. It connects your coding ag
 
 | Skill | Purpose |
 |-------|---------|
-| `appcircle:doc-assistant` | Answers Appcircle questions from official docs and product sources |
+| `appcircle:appcircle-assistant` | Answers Appcircle questions from official docs, product, and blog sources |
 | `appcircle:build-insights-report` | Renders a visual Build Insights Report from the `get_build_insights_report` MCP tool |
 
 Your agent invokes a skill automatically when your question matches its purpose, or you can call it directly:
 
 ```
-/appcircle:doc-assistant How do I configure iOS code signing for a build profile?
+/appcircle:appcircle-assistant How do I configure iOS code signing for a build profile?
 ```
 
 ## MCP server
@@ -62,4 +62,4 @@ The server authenticates with an `APPCIRCLE_ACCESS_TOKEN`, which you can obtain 
 2. Restart/reload your agent so the MCP server picks up the token.
 3. Re-export and reload when it expires.
 
-Without this, the MCP tools won't be able to authenticate. The doc-assistant skill works regardless, since it only reads public documentation.
+Without this, the MCP tools won't be able to authenticate. The appcircle-assistant skill works regardless, since it only reads public documentation.
