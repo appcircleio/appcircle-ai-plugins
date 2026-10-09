@@ -1,0 +1,20 @@
+{
+  "name": "appcircle",
+  "interface": {
+    "displayName": "Appcircle"
+  },
+  "plugins": [
+    {
+      "name": "appcircle",
+      "source": {
+        "source": "local",
+        "path": "./appcircle"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Coding"
+    }
+  ]
+}
