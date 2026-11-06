@@ -53,7 +53,7 @@ Your agent invokes a skill automatically when your question matches its purpose,
 
 ## MCP server
 
-The plugin registers `mcp.appcircle.io` as an MCP server named `appcircle`, authenticated via a bearer-token header using an Appcircle access token. The MCP tools don't work out of the box on any platform: you need to provide the token first, as described below. For the full list of available tools and how it works, see the [Appcircle MCP documentation](https://docs.appcircle.io/appcircle-ai/ai-features-on-appcircle/appcircle-mcp).
+The plugin registers `mcp.appcircle.io` as an MCP server named `appcircle`, authenticated via a bearer-token header using an Appcircle access token. The MCP tools don't work out of the box on any platform: you need to provide the token first, as described below. Using a self-hosted Appcircle server? See [Self-hosted Appcircle](#self-hosted-appcircle) instead. For the full list of available tools and how it works, see the [Appcircle MCP documentation](https://docs.appcircle.io/appcircle-ai/ai-features-on-appcircle/appcircle-mcp).
 
 ### Configure the MCP server
 
@@ -61,6 +61,9 @@ The server authenticates with an `APPCIRCLE_ACCESS_TOKEN`, which you can obtain 
 
 - [Personal Access Key](https://docs.appcircle.io/account/my-organization/security/personal-access-key)
 - [API Key](https://docs.appcircle.io/account/my-organization/security/api-keys)
+
+> [!WARNING]
+> On a self-hosted Appcircle server, don't set `APPCIRCLE_ACCESS_TOKEN`: the plugin would send your self-hosted token to `mcp.appcircle.io`. Follow [Self-hosted Appcircle](#self-hosted-appcircle) instead.
 
 1. Export it in the environment where your coding agent runs:
 
@@ -76,3 +79,50 @@ The server authenticates with an `APPCIRCLE_ACCESS_TOKEN`, which you can obtain 
 4. Re-export and reload when it expires.
 
 Without this, the MCP tools won't be able to authenticate. The appcircle-assistant skill works regardless, since it only reads public documentation.
+
+### Self-hosted Appcircle
+
+Self-hosted Appcircle servers run their own MCP service at `https://mcp.<your-appcircle-domain>`. The plugin always points to the cloud server, so register your self-hosted server yourself.
+
+Keep your self-hosted token in a separate variable, `APPCIRCLE_SELFHOSTED_TOKEN`, and leave `APPCIRCLE_ACCESS_TOKEN` unset. The plugin's own server only reads `APPCIRCLE_ACCESS_TOKEN`, so your self-hosted token never reaches `mcp.appcircle.io`.
+
+1. Make sure `APPCIRCLE_ACCESS_TOKEN` is not set. If you used the cloud setup before, remove it from your shell profile (for example `~/.zshrc`), then unset it and check that nothing is printed:
+
+   ```bash
+   unset APPCIRCLE_ACCESS_TOKEN
+   echo "$APPCIRCLE_ACCESS_TOKEN"
+   ```
+2. Export a token issued by your self-hosted server ([Personal Access Key](https://docs.appcircle.io/account/my-organization/security/personal-access-key) or [API Key](https://docs.appcircle.io/account/my-organization/security/api-keys)):
+
+   ```bash
+   export APPCIRCLE_SELFHOSTED_TOKEN=<your-self-hosted-token>
+   ```
+3. Register your server:
+
+   - **Claude Code:** add your server, then disable the plugin's `appcircle` server from `/mcp` (select `appcircle`, then **Disable**):
+
+     ```bash
+     claude mcp add --scope user --transport http appcircle-selfhosted https://mcp.<your-appcircle-domain> \
+       --header 'Authorization: Bearer ${APPCIRCLE_SELFHOSTED_TOKEN}'
+     ```
+   - **Copilot CLI:** disable the plugin's server, then add yours:
+
+     ```bash
+     copilot mcp disable appcircle
+     copilot mcp add --transport http appcircle-selfhosted https://mcp.<your-appcircle-domain> \
+       --header 'Authorization: Bearer ${APPCIRCLE_SELFHOSTED_TOKEN}'
+     ```
+   - **Codex:**
+
+     ```bash
+     codex mcp add appcircle-selfhosted --url https://mcp.<your-appcircle-domain> --bearer-token-env-var APPCIRCLE_SELFHOSTED_TOKEN
+     ```
+
+   For Claude Code and Copilot CLI, keep the single quotes around the header: the configuration stores `${APPCIRCLE_SELFHOSTED_TOKEN}` as is and reads the token each time the agent starts, so you don't need to register again when the token changes.
+4. **Internal CA (Claude Code, Copilot CLI):** if your server's certificate is signed by an internal certificate authority, point `NODE_EXTRA_CA_CERTS` to the CA bundle (PEM). Internal CAs are not covered for Codex yet.
+
+   ```bash
+   export NODE_EXTRA_CA_CERTS=/path/to/internal-ca.pem
+   ```
+5. Restart or reload your agent.
+6. Re-export and reload when the token expires.
