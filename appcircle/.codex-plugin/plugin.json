@@ -1,0 +1,39 @@
+{
+  "name": "appcircle",
+  "version": "1.0.0",
+  "description": "Appcircle skills covering mobile CI/CD, build, code signing, distribution, publishing, and testing, with MCP connectivity to the Appcircle platform.",
+  "author": {
+    "name": "appcircle",
+    "email": "info@appcircle.io"
+  },
+  "homepage": "https://appcircle.io",
+  "repository": "https://github.com/appcircleio/appcircle-ai-plugins",
+  "license": "MIT",
+  "keywords": [
+    "appcircle",
+    "mobile",
+    "ci-cd",
+    "build",
+    "code-signing",
+    "distribution",
+    "publishing",
+    "app-store",
+    "testing",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Appcircle",
+    "shortDescription": "Mobile CI/CD with Appcircle",
+    "longDescription": "Appcircle's official plugin. Ask questions about the Appcircle mobile CI/CD platform, including build, code signing, distribution, publishing (App Store, Google Play, Huawei AppGallery), and testing, and get answers grounded in Appcircle's official docs, product pages, and blog. It also renders visual Build Insights Reports covering CI maturity, build health and trends, root cause, workflow quality, artifact health, and queue time.",
+    "developerName": "Appcircle",
+    "category": "Coding",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://appcircle.io",
+    "defaultPrompt": [
+      "How do I configure iOS code signing for an Appcircle build profile?",
+      "Give me a build insights report for my Appcircle workspace for last month."
+    ]
+  }
+}
