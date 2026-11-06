@@ -19,7 +19,7 @@ Appcircle's official plugin for AI coding assistants. It connects your coding ag
   3. Choose **Create plugin**, then **Add marketplace**.
   4. Enter the repository URL: `https://github.com/appcircleio/appcircle-ai-plugins`.
 
-  MCP tools are only available in Claude Code and Copilot CLI for now; installing the plugin in claude.ai gets you the skills, not the MCP tools.
+  MCP tools are only available in Claude Code, Copilot CLI, and Codex for now; installing the plugin in claude.ai gets you the skills, not the MCP tools.
 
 - **GitHub Copilot CLI** — this repo is also a Copilot CLI plugin marketplace.
 
@@ -29,6 +29,14 @@ Appcircle's official plugin for AI coding assistants. It connects your coding ag
   ```
 
   This plugin can also be added to **VS Code's Copilot Chat** via its Agent Plugins feature.
+
+- **ChatGPT and Codex** — this repo is also a ChatGPT/Codex plugin marketplace.
+
+  ```shell
+  codex plugin marketplace add appcircleio/appcircle-ai-plugins
+  ```
+
+  Then restart the ChatGPT desktop app, open the **Plugins Directory**, pick the **Appcircle** source, and install the plugin. In Codex CLI, use `/plugins` to install it instead.
 
 ## Skills
 
@@ -45,7 +53,7 @@ Your agent invokes a skill automatically when your question matches its purpose,
 
 ## MCP server
 
-The plugin registers `mcp.appcircle.io` as an MCP server named `appcircle`, authenticated via a bearer-token header using an Appcircle access token. For the full list of available tools and how it works, see the [Appcircle MCP](https://github.com/appcircleio/appcircle-mcp) repository.
+The plugin registers `mcp.appcircle.io` as an MCP server named `appcircle`, authenticated via a bearer-token header using an Appcircle access token. The MCP tools don't work out of the box on any platform: you need to provide the token first, as described below. For the full list of available tools and how it works, see the [Appcircle MCP documentation](https://docs.appcircle.io/appcircle-ai/ai-features-on-appcircle/appcircle-mcp).
 
 ### Configure the MCP server
 
@@ -59,7 +67,12 @@ The server authenticates with an `APPCIRCLE_ACCESS_TOKEN`, which you can obtain 
    ```bash
    export APPCIRCLE_ACCESS_TOKEN=<your-token>
    ```
-2. Restart/reload your agent so the MCP server picks up the token.
-3. Re-export and reload when it expires.
+2. **Codex only:** the plugin can't pass the token to the server, so register the server yourself (this replaces the plugin's entry):
+
+   ```bash
+   codex mcp add appcircle --url https://mcp.appcircle.io --bearer-token-env-var APPCIRCLE_ACCESS_TOKEN
+   ```
+3. Restart/reload your agent so the MCP server picks up the token.
+4. Re-export and reload when it expires.
 
 Without this, the MCP tools won't be able to authenticate. The appcircle-assistant skill works regardless, since it only reads public documentation.

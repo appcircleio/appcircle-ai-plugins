@@ -144,7 +144,7 @@ text field is left out, `render.py` skips that box entirely rather than
 fabricating one — so an in-scope section with no authored text just renders with
 a gap where the narrative would be.
 
-### Primary path (any environment with code execution — Claude Code, Cowork, analysis tool)
+### Primary path (any environment with code execution — Claude Code, Cowork, analysis tool, Codex, ChatGPT)
 
 1. Get the `get_build_insights_report` envelope (the full `{success, data, meta}`
    object).
@@ -187,7 +187,8 @@ a gap where the narrative would be.
    root cause, workflow quality, artifact health, queue time), embeds Chart.js
    from cdnjs for the chart sections, and appends the omission note when needed.
 5. Present `report.html` (an existing `reports/`/`output/` folder if present, else
-   the current directory). One `present_files` call, no postamble.
+   the current directory). One `present_files` call where that tool exists,
+   otherwise share the file path or attach the file; no postamble.
 
 The renderer takes the response exactly as the tool returns it — including the
 full daily series and the complete inactive-profile list — and does the trimming
